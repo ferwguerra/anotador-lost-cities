@@ -23,7 +23,7 @@ El resto del repo (Gradle, `MainActivity.java`) solo envuelve esos archivos en u
 ## Reglas implementadas (resumen)
 
 - 6 expediciones de 9 casilleros, números no decrecientes; el 0 solo marca el círculo ×2 de una expedición sin empezar.
-- Casilleros especiales (`SPECIAL` en `logic.js`): artefacto (tacha uno en la columna de artefactos) y aceleración (avanza gratis repitiendo el último número).
+- Casilleros especiales (`SPECIAL` en `logic.js`): artefacto (tacha uno en la columna de artefactos) y aceleración (avanza gratis repitiendo el último número; es obligatoria, sin opción de no acelerar, salvo que no haya ninguna expedición disponible).
 - "Pasar" tacha un dado; con 9 quedás agotado (esa columna vale 0).
 - 8 puentes (6 expediciones + artefactos + dados) en el 7.º casillero: +20 solo si sos el primero.
   - Al llegar se pregunta si fuiste el primero (estado `pending`).

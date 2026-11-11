@@ -140,7 +140,7 @@
 
   function showAccel() {
     var p = me(), opts = L.accelOptions(p);
-    var h = '<h2>' + ARROW + ' Aceleración</h2><p>Avanzá un casillero en cualquier expedición repitiendo su último número (o un 1 si es nueva).</p><div class="list">';
+    var h = '<h2>' + ARROW + ' Aceleración</h2><p>Es obligatoria: avanzá un casillero en cualquier expedición repitiendo su último número (o un 1 si es nueva).</p><div class="list">';
     opts.forEach(function (o) {
       var extra = [];
       var txt;
@@ -155,7 +155,7 @@
       h += '<button class="opt c' + o.c + '" data-accel="' + o.c + '"><span class="s">' + COLS[o.c].sym + '</span><span>' + txt +
         (extra.length ? '<small>' + extra.join(' · ') + '</small>' : '') + '</span></button>';
     });
-    h += '<button class="opt plain" data-accel="-1"><span class="s"></span><span>No acelerar</span></button></div>';
+    h += '</div>';
     open('accel', h);
   }
 
@@ -211,7 +211,7 @@
     open('rules', '<h2>Reglas rápidas</h2><ol class="rules">' +
       '<li>Tocá una expedición y elegí el número del dado. Se anota de abajo hacia arriba y cada número (1 a 9) tiene que ser igual o mayor que el anterior.</li>' +
       '<li>Un 0 en una expedición sin empezar marca el círculo: esa expedición vale doble (para bien o para mal). Es el único uso del 0: si la expedición ya empezó o ya tiene el círculo, ese 0 no se puede elegir.</li>' +
-      '<li>' + ARROW + ' Aceleración: avanzás gratis un casillero en cualquier expedición repitiendo su último número (un 1 si es nueva). Se pueden encadenar.</li>' +
+      '<li>' + ARROW + ' Aceleración: es obligatoria. Avanzás gratis un casillero en cualquier expedición repitiendo su último número (un 1 si es nueva). Se pueden encadenar. Solo se pierde si todas las expediciones están completas.</li>' +
       '<li>' + ART + ' Artefacto: se tacha solo un artefacto de la columna derecha. Con los 9 casilleros llenos, otro número válido marca el artefacto final (una vez por expedición).</li>' +
       '<li>Si no podés o no querés anotar, tocá «Pasar» y se tacha un dado. Con 9 dados tachados quedás agotado: esa columna vale 0, pero seguís jugando.</li>' +
       '<li>Puentes: al llegar al 7.º casillero (o 7.º artefacto o dado) ganás 20 puntos solo si sos el primero. Si otro jugador cruza un puente antes que vos, tocá su 20 para tacharlo y no te va a preguntar cuando llegues. Después de cruzarlo, tocá el 20 para corregirlo.</li>' +
@@ -260,7 +260,7 @@
       L.resolveBridge(p, +el.dataset.i, el.dataset.bridgeAns === '1'); render();
     } else if ((el = closest(e.target, 'data-accel'))) {
       var ac = +el.dataset.accel;
-      if (ac < 0) L.skipAccel(p); else L.accelerate(p, ac);
+      L.accelerate(p, ac);
       render();
     } else if ((el = closest(e.target, 'data-act'))) {
       var a = el.dataset.act;

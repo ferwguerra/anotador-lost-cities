@@ -1,6 +1,6 @@
 // Deja la app disponible sin conexión. Primero intenta la red (así llegan las actualizaciones)
 // y, si no hay, responde con la última copia guardada.
-var CACHE = 'anotador-v3';
+var CACHE = 'anotador-v4';
 var FILES = ['./', 'index.html', 'style.css', 'logic.js', 'app.js', 'manifest.webmanifest', 'icon-v2-180.png', 'icon-v2-512.png'];
 
 self.addEventListener('install', function (e) {

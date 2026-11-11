@@ -67,7 +67,11 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
   background: var(--panel);
 }
 .bridge.won i { background: var(--gold); color: #221a05; box-shadow: 0 0 0 2px rgba(242, 193, 78, .35); }
-.bridge.lost i { text-decoration: line-through; opacity: .45; }
+.bridge.lost i { position: relative; opacity: .5; }
+.bridge.lost i::after {
+  content: ''; position: absolute; left: -2px; right: -2px; top: 50%; height: 2px; margin-top: -1px;
+  background: var(--muted); border-radius: 1px; transform: rotate(-35deg);
+}
 .bridge.pending i { outline: 2px dashed var(--gold); color: var(--gold); }
 
 .sym { position: relative; display: flex; align-items: center; justify-content: center; border-radius: 7px; background: var(--panel); font-size: clamp(14px, 4.6vw, 20px); }

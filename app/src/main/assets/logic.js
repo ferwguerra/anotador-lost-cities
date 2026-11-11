@@ -121,11 +121,22 @@
 
   function resolveBridge(p, i, won) { p.bridges[i] = won ? 'won' : 'lost'; }
 
+  // Si el jugador ya llegó al casillero del puente (7.º casillero, artefacto o dado).
+  function bridgeReached(p, i) {
+    var n = i < 6 ? p.cols[i].nums.length : i === ART_BRIDGE ? p.art : p.dice;
+    return n >= BRIDGE_ROW;
+  }
+
+  // Tocar un puente: antes de llegar, lo tacha o destacha (otro jugador lo cruzó primero,
+  // así al llegar no hay nada que preguntar); después de cruzarlo, alterna entre ganado y perdido.
+  // Devuelve el nuevo estado, o null si no se puede tocar.
   function toggleBridge(p, i) {
-    if (p.bridges[i] !== 'won' && p.bridges[i] !== 'lost') return false;
+    var b = p.bridges[i];
+    if (b === 'pending') return null;
     snap(p);
-    p.bridges[i] = p.bridges[i] === 'won' ? 'lost' : 'won';
-    return true;
+    if (!bridgeReached(p, i)) p.bridges[i] = b === 'lost' ? null : 'lost';
+    else p.bridges[i] = b === 'won' ? 'lost' : 'won';
+    return p.bridges[i];
   }
 
   function colScore(col) {
@@ -148,7 +159,7 @@
     ART_BRIDGE: ART_BRIDGE, DICE_BRIDGE: DICE_BRIDGE,
     newPlayer: newPlayer, undo: undo, dieOption: dieOption, applyDie: applyDie, refuse: refuse,
     accelOptions: accelOptions, accelerate: accelerate, skipAccel: skipAccel,
-    pendingBridge: pendingBridge, resolveBridge: resolveBridge, toggleBridge: toggleBridge,
+    pendingBridge: pendingBridge, resolveBridge: resolveBridge, toggleBridge: toggleBridge, bridgeReached: bridgeReached,
     score: score
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

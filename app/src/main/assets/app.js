@@ -214,7 +214,7 @@
       '<li>' + ARROW + ' Aceleración: avanzás gratis un casillero en cualquier expedición repitiendo su último número (un 1 si es nueva). Se pueden encadenar.</li>' +
       '<li>' + ART + ' Artefacto: se tacha solo un artefacto de la columna derecha. Con los 9 casilleros llenos, otro número válido marca el artefacto final (una vez por expedición).</li>' +
       '<li>Si no podés o no querés anotar, tocá «Pasar» y se tacha un dado. Con 9 dados tachados quedás agotado: esa columna vale 0, pero seguís jugando.</li>' +
-      '<li>Puentes: al llegar al 7.º casillero (o 7.º artefacto o dado) ganás 20 puntos solo si sos el primero. Tocá el 20 para corregirlo.</li>' +
+      '<li>Puentes: al llegar al 7.º casillero (o 7.º artefacto o dado) ganás 20 puntos solo si sos el primero. Si otro jugador cruza un puente antes que vos, tocá su 20 para tacharlo y no te va a preguntar cuando llegues. Después de cruzarlo, tocá el 20 para corregirlo.</li>' +
       '<li>El puntaje se ve recién al tocar «Terminar»; después la hoja queda bloqueada, salvo que la reabras desde el menú.</li>' +
       '<li>Puntaje: el casillero más alto de cada expedición da los puntos de la izquierda; los artefactos y dados, los de la derecha.</li>' +
       '<li>La partida termina al final del turno en que todos los jugadores están agotados o se cruzaron los 8 puentes entre todos.</li>' +
@@ -229,8 +229,11 @@
     if (state.finished) { toast('La partida terminó. Desde el menú podés reabrirla o empezar una nueva.'); return; }
     if (closest(e.target, 'data-finish')) showFinish();
     else if ((el = closest(e.target, 'data-bridge'))) {
-      var i = +el.dataset.bridge;
-      if (L.toggleBridge(me(), i)) render(); else toast('Todavía no cruzaste este puente.');
+      var i = +el.dataset.bridge, reached = L.bridgeReached(me(), i), b = L.toggleBridge(me(), i);
+      if (!b && reached) return;
+      render();
+      if (!reached) toast(b ? 'Puente de ' + bridgeName(i) + ' tachado: ya lo cruzó otro jugador.' : 'Puente de ' + bridgeName(i) + ' destachado.');
+      else toast(b === 'won' ? 'Puente ganado: +20.' : 'Puente sin bono.');
     } else if ((el = closest(e.target, 'data-col'))) showPad(+el.dataset.col);
     else if (closest(e.target, 'data-art')) toast('Los artefactos se tachan solos al anotar en un casillero ' + ART + '.');
     else if (closest(e.target, 'data-pass')) toast('Para tachar un dado usá «Pasar».');

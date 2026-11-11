@@ -115,6 +115,7 @@
     return o;
   }
 
+  // Solo cuando no hay ninguna expedición para acelerar: la aceleración es obligatoria.
   function skipAccel(p) { p.accel = false; }
 
   function pendingBridge(p) { return p.bridges.indexOf('pending'); }

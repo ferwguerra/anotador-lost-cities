@@ -1,0 +1,22 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'ar.anotador.expediciones'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'ar.anotador.expediciones'
+        minSdk 26
+        // 34 a propósito: con 35 Android fuerza el dibujo de borde a borde y habría que manejar insets en la WebView.
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

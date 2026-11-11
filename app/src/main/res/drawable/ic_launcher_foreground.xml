@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Seis columnas de colores de distinta altura, como las expediciones de la hoja. -->
+<!-- Pirámide escalonada dorada; el fondo verde lo pone ic_launcher.xml. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#E5484D" android:pathData="M30,52h7v24h-7z" />
-    <path android:fillColor="#F77A28" android:pathData="M38.5,62h7v14h-7z" />
-    <path android:fillColor="#F0C419" android:pathData="M47,44h7v32h-7z" />
-    <path android:fillColor="#46B45F" android:pathData="M55.5,32h7v44h-7z" />
-    <path android:fillColor="#3E8EF7" android:pathData="M64,48h7v28h-7z" />
-    <path android:fillColor="#AA73F5" android:pathData="M72.5,38h7v38h-7z" />
+    <path android:fillColor="#F2C14E" android:pathData="M24.0,70.4H84.0V79.2H24.0z" />
+    <path android:fillColor="#C9952E" android:pathData="M24.0,77.6H84.0V79.2H24.0z" />
+    <path android:fillColor="#F2C14E" android:pathData="M29.0,61.6H79.0V70.4H29.0z" />
+    <path android:fillColor="#C9952E" android:pathData="M29.0,68.8H79.0V70.4H29.0z" />
+    <path android:fillColor="#F2C14E" android:pathData="M34.0,52.8H74.0V61.6H34.0z" />
+    <path android:fillColor="#C9952E" android:pathData="M34.0,60.0H74.0V61.6H34.0z" />
+    <path android:fillColor="#F2C14E" android:pathData="M39.0,44.0H69.0V52.8H39.0z" />
+    <path android:fillColor="#C9952E" android:pathData="M39.0,51.2H69.0V52.8H39.0z" />
+    <path android:fillColor="#F2C14E" android:pathData="M44.0,35.2H64.0V44.0H44.0z" />
+    <path android:fillColor="#C9952E" android:pathData="M44.0,42.4H64.0V44.0H44.0z" />
+    <path android:fillColor="#FFE49A" android:pathData="M48.0,79.2 L60.0,79.2 L57.2,35.2 L50.8,35.2 z" />
+    <path android:fillColor="#F2C14E" android:pathData="M48.0,28.8H60.0V35.2H48.0z" />
+    <path android:fillColor="#C9952E" android:pathData="M52.0,31.2H56.0V35.2H52.0z" />
 </vector>

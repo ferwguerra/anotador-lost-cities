@@ -11,7 +11,6 @@
   var $ = function (id) { return document.getElementById(id); };
   var state = load();
   var modal = null; // nombre del modal abierto por el usuario (pad, menu, ...) o prompt automático
-  var accelPeek = false; // diálogo de aceleración bajado para mirar la hoja antes de elegir
 
   function load() {
     try {
@@ -39,11 +38,11 @@
     save();
     renderSheet();
     prompts();
-    var peek = accelPeek && me().accel;
+    var accel = !!me().accel && !state.finished;
     $('btnUndo').disabled = state.finished || !me().hist.length;
     $('btnPass').disabled = !!state.finished;
-    $('btnPass').hidden = $('btnMenu').hidden = peek;
-    $('btnAccel').hidden = !peek;
+    $('btnPass').hidden = $('btnMenu').hidden = accel;
+    $('accelHint').hidden = !accel;
   }
 
   function at(row, col, cls, inner, attrs) {
@@ -57,9 +56,9 @@
 
   function renderSheet() {
     var p = me(), s = L.score(p), h = '', c, r;
-    // Con la aceleración bajada, se marca en la hoja dónde caería cada opción.
+    // Con una aceleración pendiente se marca en la hoja dónde caería cada opción.
     var ghost = {};
-    if (accelPeek && p.accel) L.accelOptions(p).forEach(function (o) { ghost[o.c] = o; });
+    if (p.accel) L.accelOptions(p).forEach(function (o) { ghost[o.c] = o; });
 
     for (r = 1; r <= 9; r++) {
       h += at(rowToGrid(r), 1, 'lbl' + (L.ROW_PTS[r - 1] < 0 ? ' neg' : ''), fmt(L.ROW_PTS[r - 1]));
@@ -121,23 +120,18 @@
   window.addEventListener('popstate', function () {
     if (!pushed) return; // lo disparó close()
     pushed = false;
-    if (accelPeek && !modal) { accelPeek = false; render(); return; }
     if (isDismissable()) hideModal();
-    else if (modal) pushModalState(); // las preguntas de puente y aceleración hay que responderlas
+    else if (modal) pushModalState(); // la pregunta del puente hay que responderla
   });
 
-  // Preguntas automáticas que deja pendiente la última anotación: primero puentes, después aceleración.
+  // Pregunta automática que deja pendiente la última anotación: primero el puente.
+  // La aceleración no usa diálogo: se elige tocando una casilla marcada en la hoja.
   function prompts() {
-    if (modal && modal !== 'bridge' && modal !== 'accel') return;
+    if (modal && modal !== 'bridge') return;
     var p = me(), b = L.pendingBridge(p);
     if (b >= 0) return showBridge(b);
-    if (p.accel) {
-      if (!L.accelOptions(p).length) { L.skipAccel(p); save(); }
-      else if (accelPeek) { if (modal) hideModal(); return; }
-      else return showAccel();
-    }
-    accelPeek = false;
-    if (modal || pushed) close(); // pushed sin modal: quedó la entrada del historial de la aceleración bajada
+    if (p.accel && !L.accelOptions(p).length) { L.skipAccel(p); save(); }
+    if (modal) close();
   }
 
   function showBridge(i) {
@@ -148,27 +142,6 @@
       '<button class="opt plain" data-bridge-ans="1" data-i="' + i + '"><span class="s" style="color:var(--gold)">⦿</span><span>Fui el primero<small>+20 puntos</small></span></button>' +
       '<button class="opt plain" data-bridge-ans="0" data-i="' + i + '"><span class="s" style="color:var(--muted)">⊘</span><span>Ya lo había cruzado otro<small>Sin bono</small></span></button>' +
       '</div>', i < 6 ? i : null);
-  }
-
-  function showAccel() {
-    var p = me(), opts = L.accelOptions(p);
-    var h = '<h2>' + ARROW + ' Aceleración</h2><p>Es obligatoria: avanzá un casillero en cualquier expedición repitiendo su último número (o un 1 si es nueva).</p><div class="list">';
-    opts.forEach(function (o) {
-      var extra = [];
-      var txt;
-      if (o.kind === 'top') { txt = 'Marcar el artefacto final'; extra.push(ART + ' tacha un artefacto'); }
-      else {
-        txt = 'Escribir ' + o.value + ' en el casillero ' + o.row;
-        if (o.row === 1) extra.push('empieza la expedición' + (p.cols[o.c].circle ? ' (×2)' : ''));
-        if (o.special === 'A') extra.push(ART + ' artefacto');
-        if (o.special === 'R') extra.push(ARROW + ' otra aceleración');
-        if (o.bridge) extra.push('cruza el puente');
-      }
-      h += '<button class="opt c' + o.c + '" data-accel="' + o.c + '"><span class="s">' + COLS[o.c].sym + '</span><span>' + txt +
-        (extra.length ? '<small>' + extra.join(' · ') + '</small>' : '') + '</span></button>';
-    });
-    h += '</div><div class="row"><button class="btn ghost" data-act="peek">▾ Ver la hoja</button></div>';
-    open('accel', h);
   }
 
   function showPad(c) {
@@ -223,7 +196,7 @@
     open('rules', '<h2>Reglas rápidas</h2><ol class="rules">' +
       '<li>Tocá una expedición y elegí el número del dado. Se anota de abajo hacia arriba y cada número (1 a 9) tiene que ser igual o mayor que el anterior.</li>' +
       '<li>Un 0 en una expedición sin empezar marca el círculo: esa expedición vale doble (para bien o para mal). Es el único uso del 0: si la expedición ya empezó o ya tiene el círculo, ese 0 no se puede elegir.</li>' +
-      '<li>' + ARROW + ' Aceleración: es obligatoria. Avanzás gratis un casillero en cualquier expedición repitiendo su último número (un 1 si es nueva). Se pueden encadenar. Solo se pierde si todas las expediciones están completas. Con «Ver la hoja» bajás el diálogo para mirar la grilla: las opciones quedan marcadas y podés tocarlas directamente.</li>' +
+      '<li>' + ARROW + ' Aceleración: es obligatoria. Avanzás gratis un casillero en cualquier expedición repitiendo su último número (un 1 si es nueva). Se pueden encadenar. Solo se pierde si todas las expediciones están completas. Las opciones quedan marcadas en la hoja: tocá la que quieras.</li>' +
       '<li>' + ART + ' Artefacto: se tacha solo un artefacto de la columna derecha. Con los 9 casilleros llenos, otro número válido marca el artefacto final (una vez por expedición).</li>' +
       '<li>Si no podés o no querés anotar, tocá «Pasar» y se tacha un dado. Con 9 dados tachados quedás agotado: esa columna vale 0, pero seguís jugando.</li>' +
       '<li>Puentes: al llegar al 7.º casillero (o 7.º artefacto o dado) ganás 20 puntos solo si sos el primero. Si otro jugador cruza un puente antes que vos, tocá su 20 para tacharlo y no te va a preguntar cuando llegues. Después de cruzarlo, tocá el 20 para corregirlo.</li>' +
@@ -239,12 +212,12 @@
   $('sheet').addEventListener('click', function (e) {
     var el;
     if (state.finished) { toast('La partida terminó. Desde el menú podés reabrirla o empezar una nueva.'); return; }
-    if (accelPeek && me().accel) {
-      // Tocar una expedición marcada la acelera directamente; cualquier otro toque vuelve al diálogo.
+    if (me().accel) {
+      // Aceleración pendiente: tocar una expedición marcada la acelera; el resto de la hoja queda bloqueada.
       el = closest(e.target, 'data-col');
       var o = el && L.accelerate(me(), +el.dataset.col);
-      accelPeek = false;
-      if (o) toast(o.kind === 'top' ? 'Aceleración: artefacto final marcado.' : 'Aceleración: ' + o.value + ' en la expedición ' + COLS[o.c].name.toLowerCase() + '.');
+      if (!o) { toast(ARROW + ' Aceleración pendiente: tocá una de las casillas marcadas.'); return; }
+      toast(o.kind === 'top' ? 'Aceleración: artefacto final marcado.' : 'Aceleración: ' + o.value + ' en la expedición ' + COLS[o.c].name.toLowerCase() + '.');
       render();
       return;
     }
@@ -262,7 +235,6 @@
 
   $('btnUndo').addEventListener('click', function () { if (L.undo(me())) { toast('Deshecho.'); render(); } });
   $('btnMenu').addEventListener('click', showMenu);
-  $('btnAccel').addEventListener('click', function () { accelPeek = false; render(); });
   $('btnPass').addEventListener('click', function () {
     var p = me();
     if (L.refuse(p)) toast(p.dice >= 9 ? 'Dado tachado: 9/9, quedaste agotado.' : 'Dado tachado: ' + p.dice + '/9.');
@@ -280,14 +252,9 @@
       render();
     } else if ((el = closest(e.target, 'data-bridge-ans'))) {
       L.resolveBridge(p, +el.dataset.i, el.dataset.bridgeAns === '1'); render();
-    } else if ((el = closest(e.target, 'data-accel'))) {
-      var ac = +el.dataset.accel;
-      L.accelerate(p, ac);
-      render();
     } else if ((el = closest(e.target, 'data-act'))) {
       var a = el.dataset.act;
       if (a === 'close') close();
-      else if (a === 'peek') { accelPeek = true; render(); } // conserva la entrada del historial: Atrás vuelve a mostrar el diálogo
       else if (a === 'results') showResults();
       else if (a === 'rules') showRules();
       else if (a === 'new') showNew();
@@ -303,8 +270,7 @@
   // Botón Atrás de Android: cierra el modal abierto si se puede cerrar. Devuelve true si lo manejó.
   window.onAndroidBack = function () {
     if (isDismissable()) { close(); return true; }
-    if (accelPeek && me().accel) { accelPeek = false; render(); return true; }
-    return !!modal; // las preguntas de puente y aceleración hay que responderlas
+    return !!modal; // la pregunta del puente hay que responderla
   };
 
   // Versión web (iPhone/PWA): funcionar sin conexión y mantener la pantalla encendida.

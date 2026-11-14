@@ -11,6 +11,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var state = load();
   var modal = null; // nombre del modal abierto por el usuario (pad, menu, ...) o prompt automático
+  var accelPeek = false; // diálogo de aceleración bajado para mirar la hoja antes de elegir
 
   function load() {
     try {
@@ -37,9 +38,12 @@
   function render() {
     save();
     renderSheet();
+    prompts();
+    var peek = accelPeek && me().accel;
     $('btnUndo').disabled = state.finished || !me().hist.length;
     $('btnPass').disabled = !!state.finished;
-    prompts();
+    $('btnPass').hidden = $('btnMenu').hidden = peek;
+    $('btnAccel').hidden = !peek;
   }
 
   function at(row, col, cls, inner, attrs) {
@@ -53,6 +57,9 @@
 
   function renderSheet() {
     var p = me(), s = L.score(p), h = '', c, r;
+    // Con la aceleración bajada, se marca en la hoja dónde caería cada opción.
+    var ghost = {};
+    if (accelPeek && p.accel) L.accelOptions(p).forEach(function (o) { ghost[o.c] = o; });
 
     for (r = 1; r <= 9; r++) {
       h += at(rowToGrid(r), 1, 'lbl' + (L.ROW_PTS[r - 1] < 0 ? ' neg' : ''), fmt(L.ROW_PTS[r - 1]));
@@ -66,11 +73,13 @@
     for (c = 0; c < 6; c++) {
       var col = p.cols[c], n = col.nums.length, gc = c + 2;
       h += scoreBox(1, gc, 'c' + c, s.cols[c], ' data-col="' + c + '"');
-      h += at(2, gc, 'endart' + (col.top ? ' on' : ''), ART, ' data-col="' + c + '"');
+      var g = ghost[c];
+      h += at(2, gc, 'endart' + (col.top ? ' on' : g && g.kind === 'top' ? ' ghost' : ''), ART, ' data-col="' + c + '"');
       for (r = 1; r <= 9; r++) {
         var sp = L.SPECIAL[c][r], mark = sp === 'A' ? ART : sp === 'R' ? ARROW : '';
         var cls = 'cell c' + c, inner;
         if (r <= n) { cls += ' full'; inner = col.nums[r - 1] + (mark ? '<span class="mini">' + mark + '</span>' : ''); }
+        else if (g && g.kind === 'num' && r === g.row) { cls += ' ghost'; inner = g.value + (mark ? '<span class="mini">' + mark + '</span>' : ''); }
         else { if (r === n + 1) cls += ' next'; inner = mark ? '<span class="mark' + (sp === 'R' ? ' arrow' : '') + '">' + mark + '</span>' : ''; }
         h += at(rowToGrid(r), gc, cls, inner, ' data-col="' + c + '"');
       }
@@ -112,6 +121,7 @@
   window.addEventListener('popstate', function () {
     if (!pushed) return; // lo disparó close()
     pushed = false;
+    if (accelPeek && !modal) { accelPeek = false; render(); return; }
     if (isDismissable()) hideModal();
     else if (modal) pushModalState(); // las preguntas de puente y aceleración hay que responderlas
   });
@@ -123,9 +133,11 @@
     if (b >= 0) return showBridge(b);
     if (p.accel) {
       if (!L.accelOptions(p).length) { L.skipAccel(p); save(); }
+      else if (accelPeek) { if (modal) hideModal(); return; }
       else return showAccel();
     }
-    if (modal) close();
+    accelPeek = false;
+    if (modal || pushed) close(); // pushed sin modal: quedó la entrada del historial de la aceleración bajada
   }
 
   function showBridge(i) {
@@ -155,7 +167,7 @@
       h += '<button class="opt c' + o.c + '" data-accel="' + o.c + '"><span class="s">' + COLS[o.c].sym + '</span><span>' + txt +
         (extra.length ? '<small>' + extra.join(' · ') + '</small>' : '') + '</span></button>';
     });
-    h += '</div>';
+    h += '</div><div class="row"><button class="btn ghost" data-act="peek">▾ Ver la hoja</button></div>';
     open('accel', h);
   }
 
@@ -211,7 +223,7 @@
     open('rules', '<h2>Reglas rápidas</h2><ol class="rules">' +
       '<li>Tocá una expedición y elegí el número del dado. Se anota de abajo hacia arriba y cada número (1 a 9) tiene que ser igual o mayor que el anterior.</li>' +
       '<li>Un 0 en una expedición sin empezar marca el círculo: esa expedición vale doble (para bien o para mal). Es el único uso del 0: si la expedición ya empezó o ya tiene el círculo, ese 0 no se puede elegir.</li>' +
-      '<li>' + ARROW + ' Aceleración: es obligatoria. Avanzás gratis un casillero en cualquier expedición repitiendo su último número (un 1 si es nueva). Se pueden encadenar. Solo se pierde si todas las expediciones están completas.</li>' +
+      '<li>' + ARROW + ' Aceleración: es obligatoria. Avanzás gratis un casillero en cualquier expedición repitiendo su último número (un 1 si es nueva). Se pueden encadenar. Solo se pierde si todas las expediciones están completas. Con «Ver la hoja» bajás el diálogo para mirar la grilla: las opciones quedan marcadas y podés tocarlas directamente.</li>' +
       '<li>' + ART + ' Artefacto: se tacha solo un artefacto de la columna derecha. Con los 9 casilleros llenos, otro número válido marca el artefacto final (una vez por expedición).</li>' +
       '<li>Si no podés o no querés anotar, tocá «Pasar» y se tacha un dado. Con 9 dados tachados quedás agotado: esa columna vale 0, pero seguís jugando.</li>' +
       '<li>Puentes: al llegar al 7.º casillero (o 7.º artefacto o dado) ganás 20 puntos solo si sos el primero. Si otro jugador cruza un puente antes que vos, tocá su 20 para tacharlo y no te va a preguntar cuando llegues. Después de cruzarlo, tocá el 20 para corregirlo.</li>' +
@@ -227,6 +239,15 @@
   $('sheet').addEventListener('click', function (e) {
     var el;
     if (state.finished) { toast('La partida terminó. Desde el menú podés reabrirla o empezar una nueva.'); return; }
+    if (accelPeek && me().accel) {
+      // Tocar una expedición marcada la acelera directamente; cualquier otro toque vuelve al diálogo.
+      el = closest(e.target, 'data-col');
+      var o = el && L.accelerate(me(), +el.dataset.col);
+      accelPeek = false;
+      if (o) toast(o.kind === 'top' ? 'Aceleración: artefacto final marcado.' : 'Aceleración: ' + o.value + ' en la expedición ' + COLS[o.c].name.toLowerCase() + '.');
+      render();
+      return;
+    }
     if (closest(e.target, 'data-finish')) showFinish();
     else if ((el = closest(e.target, 'data-bridge'))) {
       var i = +el.dataset.bridge, reached = L.bridgeReached(me(), i), b = L.toggleBridge(me(), i);
@@ -241,6 +262,7 @@
 
   $('btnUndo').addEventListener('click', function () { if (L.undo(me())) { toast('Deshecho.'); render(); } });
   $('btnMenu').addEventListener('click', showMenu);
+  $('btnAccel').addEventListener('click', function () { accelPeek = false; render(); });
   $('btnPass').addEventListener('click', function () {
     var p = me();
     if (L.refuse(p)) toast(p.dice >= 9 ? 'Dado tachado: 9/9, quedaste agotado.' : 'Dado tachado: ' + p.dice + '/9.');
@@ -265,6 +287,7 @@
     } else if ((el = closest(e.target, 'data-act'))) {
       var a = el.dataset.act;
       if (a === 'close') close();
+      else if (a === 'peek') { accelPeek = true; render(); } // conserva la entrada del historial: Atrás vuelve a mostrar el diálogo
       else if (a === 'results') showResults();
       else if (a === 'rules') showRules();
       else if (a === 'new') showNew();
@@ -280,6 +303,7 @@
   // Botón Atrás de Android: cierra el modal abierto si se puede cerrar. Devuelve true si lo manejó.
   window.onAndroidBack = function () {
     if (isDismissable()) { close(); return true; }
+    if (accelPeek && me().accel) { accelPeek = false; render(); return true; }
     return !!modal; // las preguntas de puente y aceleración hay que responderlas
   };
 

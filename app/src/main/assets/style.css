@@ -109,7 +109,8 @@ button { font: inherit; color: inherit; border: 0; background: none; padding: 0;
 .btn:active { filter: brightness(1.25); }
 .btn:disabled { opacity: .35; }
 .btn[hidden] { display: none; }
-#btnAccel { flex: 2.2; }
+.hint { flex: 2.2; display: flex; align-items: center; justify-content: center; text-align: center; border-radius: 12px; border: 1.5px dashed var(--gold); color: var(--gold); font-weight: 700; font-size: 14px; line-height: 1.2; padding: 0 8px; }
+.hint[hidden] { display: none; }
 .btn.primary { flex: 1.6; background: #7a3b34; }
 .btn.icon { flex: none; width: 52px; font-size: 20px; }
 .btn.gold { background: var(--gold); color: #221a05; }
